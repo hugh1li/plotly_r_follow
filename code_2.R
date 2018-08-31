@@ -337,4 +337,22 @@ SharedData$new(d, ~key) %>% plot_ly(x = ~x, y = ~y) %>% highlight('plotly_select
 
 
 # 5 animating views ----
+data(gapminder, package = 'gapminder')
 
+gg <- ggplot(gapminder, aes(gdpPercap, lifeExp, color = continent)) + geom_point(aes(size = pop, frame = year, ids = country)) + scale_x_log10()
+ggplotly(gg)
+
+base <- gapminder %>% plot_ly( x = ~gdpPercap, y = ~lifeExp, size = ~pop, text = ~country, hoverinfo = 'text') %>% layout(xaxis = list(type = 'log'))
+base %>% add_markers(color = ~continent, frame = ~year, ids = ~country) %>% animation_opts(1000, easing = 'elastic', redraw = FALSE) %>% animation_button(x = 1, xanchor = 'right', y = 0, yanchor = 'bottom') %>% animation_slider(currentvalue = list(prefix = "YEAR", font= list(color = 'red')))
+
+meanLife <- with(gapminder, tapply(lifeExp, INDEX =  continent, mean))
+gapminder$continent <- factor(gapminder$continent, levels= names(sort(meanLife)))
+base %>% add_markers(data = gapminder, frame = ~continent) %>% hide_legend() %>% animation_opts(frame = 1000, transition = 0, redraw= FALSE)
+
+base %>% add_markers(color = ~continent, alpha = 0.2, showlegend = F) %>% add_markers(color = ~continent, frame = ~year, ids = ~country) %>% animation_opts(1000, redraw = FALSE)
+
+g <- crosstalk::SharedData$new(gapminder, ~continent)
+gg <- ggplot(g, aes(gdpPercap, lifeExp, color = continent, frame = year)) + geom_point(aes(size = pop, ids = country)) + geom_smooth(se = FALSE, method = 'lm') + scale_x_log10()
+ggplotly(gg) %>% highlight('plotly_hover')
+
+demo("tour-USArrests", package = "plotly")
